@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Code Review Copilot</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <header>
+    <div class="logo">🤖 Code Review Copilot</div>
+    <p class="tagline">Catches bugs, explains decisions, teaches as it reviews</p>
+  </header>
+
+  <main>
+    <section class="card" id="review-section">
+      <h2>Review a Pull Request</h2>
+      <p>Paste a GitHub PR URL to run an AI-powered code review with inline comments and risk summary.</p>
+
+      <div class="form-group">
+        <label for="pr-url">GitHub PR URL</label>
+        <input type="url" id="pr-url" placeholder="https://github.com/owner/repo/pull/123" />
+      </div>
+
+      <div class="form-group">
+        <label for="conventions">Team Conventions (optional, one per line)</label>
+        <textarea id="conventions" rows="3" placeholder="Leave empty to auto-learn from repo history"></textarea>
+      </div>
+
+      <div class="actions">
+        <button id="btn-dry-run" class="btn secondary">Preview (Dry Run)</button>
+        <button id="btn-review" class="btn primary">Review &amp; Post to GitHub</button>
+      </div>
+    </section>
+
+    <section class="card" id="conventions-section">
+      <h2>Learn Team Conventions</h2>
+      <p>Extract coding conventions from a repository's merged PR review history.</p>
+
+      <div class="form-group">
+        <label for="repo-url">GitHub Repository URL</label>
+        <input type="url" id="repo-url" placeholder="https://github.com/owner/repo" />
+      </div>
+
+      <button id="btn-extract" class="btn primary">Extract Conventions</button>
+    </section>
+
+    <section id="results" class="hidden">
+      <div class="card">
+        <h2>Results</h2>
+        <div id="loading" class="loading hidden">
+          <div class="spinner"></div>
+          <p>Analyzing code… this may take 30–60 seconds</p>
+        </div>
+        <div id="output"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>Assignment 2: Code Review Copilot — AI reviewer for GitHub PRs</p>
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
