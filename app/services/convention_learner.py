@@ -1,9 +1,9 @@
 import json
-import re
 
 from app.config import settings
 from app.models.schemas import ConventionExtractionResult, ConventionRule
 from app.services.github import GitHubClient
+from app.services.json_parser import parse_llm_json
 from app.services.llm import get_llm_client, llm_extra_kwargs
 
 EXTRACTION_PROMPT = """You are analyzing code review history from a GitHub repository to extract team-specific coding conventions.
@@ -89,11 +89,7 @@ class ConventionLearner:
         )
 
         raw = response.choices[0].message.content or "{}"
-        text = raw.strip()
-        fence_match = re.search(r"```(?:json)?\s*\n?(.*?)\n?```", text, re.DOTALL)
-        if fence_match:
-            text = fence_match.group(1).strip()
-        data = json.loads(text)
+        data = parse_llm_json(raw)
 
         rules = []
         for r in data.get("rules", []):

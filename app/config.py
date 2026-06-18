@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     llm_api_key: str = ""
     llm_base_url: str = "http://localhost:11434/v1"
     llm_model: str = "llama3.2:1b"
-    llm_max_tokens: int = 4096
+    llm_max_tokens: int = 8192
 
     # Legacy env names still work
     openai_api_key: str = ""

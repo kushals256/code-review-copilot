@@ -2,6 +2,13 @@ from dataclasses import dataclass
 
 from app.services.diff_parser import ParsedFile
 from app.services.github import FileChange, GitHubClient
+from app.services.prompt_limits import (
+    MAX_CONTEXT_LINES,
+    MAX_DIFF_LINES,
+    MAX_IMPORT_LINES,
+    merge_context_regions,
+    truncate_lines,
+)
 
 
 @dataclass
@@ -14,10 +21,7 @@ class FileContext:
     imports_and_definitions: str
 
 
-CONTEXT_LINES = 15
-
-
-def _extract_imports_and_definitions(content: str, language_hint: str) -> str:
+def _extract_imports_and_definitions(content: str) -> str:
     if not content:
         return ""
 
@@ -36,17 +40,20 @@ def _extract_imports_and_definitions(content: str, language_hint: str) -> str:
             )
         ):
             relevant.append(line)
-        elif stripped.startswith(("class ", "def ", "function ", "interface ", "type ", "enum ", "struct ", "pub fn", "pub struct")):
+        elif stripped.startswith(
+            ("class ", "def ", "function ", "interface ", "type ", "enum ", "struct ", "pub fn", "pub struct")
+        ):
             relevant.append(line)
         elif stripped.startswith("@") or stripped.startswith("export "):
             relevant.append(line)
 
-    return "\n".join(relevant[:40])
+        if len(relevant) >= MAX_IMPORT_LINES:
+            break
+
+    return "\n".join(relevant)
 
 
-def _build_surrounding_context(
-    full_content: str | None, parsed: ParsedFile
-) -> str:
+def _build_surrounding_context(full_content: str | None, parsed: ParsedFile) -> str:
     if not full_content:
         return ""
 
@@ -55,17 +62,36 @@ def _build_surrounding_context(
     if not changed_line_nums:
         return ""
 
+    regions = merge_context_regions(changed_line_nums)
     snippets: list[str] = []
-    for line_num in sorted(changed_line_nums):
-        start = max(0, line_num - CONTEXT_LINES - 1)
-        end = min(len(lines), line_num + CONTEXT_LINES)
+
+    for start_line, end_line in regions:
+        mid = (start_line + end_line) // 2
+        ctx_start = max(0, mid - MAX_CONTEXT_LINES - 1)
+        ctx_end = min(len(lines), mid + MAX_CONTEXT_LINES)
+        region_lines = set(range(start_line, end_line + 1))
+
         snippet_lines = []
-        for i in range(start, end):
-            marker = ">>>" if (i + 1) in changed_line_nums else "   "
+        for i in range(ctx_start, ctx_end):
+            marker = ">>>" if (i + 1) in region_lines else "   "
             snippet_lines.append(f"{marker} {i + 1:4d} | {lines[i]}")
-        snippets.append(f"--- Around line {line_num} ---\n" + "\n".join(snippet_lines))
+
+        label = f"lines {start_line}-{end_line}" if start_line != end_line else f"line {start_line}"
+        snippets.append(f"--- Around {label} ---\n" + "\n".join(snippet_lines))
 
     return "\n\n".join(snippets)
+
+
+def _build_diff_summary(parsed: ParsedFile) -> str:
+    diff_lines = []
+    for hunk in parsed.hunks:
+        diff_lines.append(
+            f"@@ -{hunk.old_start},{hunk.old_count} +{hunk.new_start},{hunk.new_count} @@"
+        )
+        for line in hunk.lines:
+            prefix = "+" if line.change_type == "add" else "-" if line.change_type == "delete" else " "
+            diff_lines.append(f"{prefix}{line.content}")
+    return truncate_lines("\n".join(diff_lines), MAX_DIFF_LINES)
 
 
 class ContextBuilder:
@@ -87,33 +113,26 @@ class ContextBuilder:
             if fc.status == "removed" or not fc.patch:
                 continue
 
-            full_content = await self.github.get_file_content(
-                owner, repo, fc.filename, head_sha
-            )
             parsed = parsed_map.get(fc.filename)
             if not parsed:
                 continue
 
-            diff_lines = []
-            for hunk in parsed.hunks:
-                diff_lines.append(
-                    f"@@ -{hunk.old_start},{hunk.old_count} +{hunk.new_start},{hunk.new_count} @@"
-                )
-                for line in hunk.lines:
-                    prefix = "+" if line.change_type == "add" else "-" if line.change_type == "delete" else " "
-                    diff_lines.append(f"{prefix}{line.content}")
+            # Skip fetching huge files — diff + regions is enough
+            fetch_content = (fc.additions + fc.deletions) < 500
+            full_content = None
+            if fetch_content:
+                raw = await self.github.get_file_content(owner, repo, fc.filename, head_sha)
+                if raw and len(raw) < 50_000:
+                    full_content = raw
 
-            ext = fc.filename.rsplit(".", 1)[-1] if "." in fc.filename else ""
             contexts.append(
                 FileContext(
                     filename=fc.filename,
                     status=fc.status,
                     full_content=full_content,
-                    diff_summary="\n".join(diff_lines),
+                    diff_summary=_build_diff_summary(parsed),
                     surrounding_context=_build_surrounding_context(full_content, parsed),
-                    imports_and_definitions=_extract_imports_and_definitions(
-                        full_content or "", ext
-                    ),
+                    imports_and_definitions=_extract_imports_and_definitions(full_content or ""),
                 )
             )
 

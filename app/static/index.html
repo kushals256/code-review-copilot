@@ -4,86 +4,162 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Code Review Copilot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
-<header>
-  <div class="hero">
-    <h1>Code Review Copilot</h1>
-    <p>
-      AI-powered GitHub reviewer that detects bugs, identifies risks,
-      learns team conventions, and explains code decisions.
-    </p>
-
-    <div class="hero-stats">
-      <div class="stat-card">
-        <h3>Fast Reviews</h3>
-        <span>Automated PR Analysis</span>
-      </div>
-
-      <div class="stat-card">
-        <h3>Security Checks</h3>
-        <span>Find Vulnerabilities Early</span>
-      </div>
-
-      <div class="stat-card">
-        <h3>Learning Mode</h3>
-        <span>Junior-Friendly Explanations</span>
-      </div>
-    </div>
-  </div>
-</header>
-
-  <main>
-    <section class="card" id="review-section">
-      <h2>Review a Pull Request</h2>
-      <p>Paste a GitHub PR URL to run an AI-powered code review with inline comments and risk summary.</p>
-
-      <div class="form-group">
-        <label for="pr-url">GitHub PR URL</label>
-        <input type="url" id="pr-url" placeholder="https://github.com/owner/repo/pull/123" />
-      </div>
-
-      <div class="form-group">
-        <label for="conventions">Team Conventions (optional, one per line)</label>
-        <textarea id="conventions" rows="3" placeholder="Leave empty to auto-learn from repo history"></textarea>
-      </div>
-
-      <div class="actions">
-        <button id="btn-dry-run" class="btn secondary">Preview (Dry Run)</button>
-        <button id="btn-review" class="btn primary">Review &amp; Post to GitHub</button>
-      </div>
-    </section>
-
-    <section class="card" id="conventions-section">
-      <h2>Learn Team Conventions</h2>
-      <p>Extract coding conventions from a repository's merged PR review history.</p>
-
-      <div class="form-group">
-        <label for="repo-url">GitHub Repository URL</label>
-        <input type="url" id="repo-url" placeholder="https://github.com/owner/repo" />
-      </div>
-
-      <button id="btn-extract" class="btn primary">Extract Conventions</button>
-    </section>
-
-    <section id="results" class="hidden">
-      <div class="card">
-        <h2>Results</h2>
-        <div id="loading" class="loading hidden">
-          <div class="spinner"></div>
-          <p>Analyzing code… this may take 30–60 seconds</p>
+  <div class="page">
+    <nav class="topbar">
+      <div class="container topbar-inner">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">CR</span>
+          <span class="brand-name">Code Review Copilot</span>
         </div>
-        <div id="output"></div>
+        <div class="topbar-actions">
+          <span class="badge">Assignment 2</span>
+          <button id="theme-toggle" class="btn btn-icon" type="button" aria-label="Toggle theme">
+            <span class="theme-icon theme-icon-light">☀</span>
+            <span class="theme-icon theme-icon-dark">☾</span>
+          </button>
+        </div>
       </div>
-    </section>
-  </main>
+    </nav>
 
-<footer>
-  <p>
-    Built with FastAPI, OpenAI, GitHub APIs & Modern UI Design
-  </p>
-</footer>
+    <header class="hero">
+      <div class="container hero-inner">
+        <p class="eyebrow">AI · GitHub · Code Review</p>
+        <h1>Catch bugs before merge.</h1>
+        <p class="lead">
+          Automated PR reviews with inline comments, risk summaries,
+          convention learning, and junior-friendly explanations.
+        </p>
+
+        <div class="hero-stats">
+          <article class="stat-card stat-card-1">
+            <span class="stat-icon">⚡</span>
+            <h3>PR Analysis</h3>
+            <p>Unified diffs + full file context</p>
+          </article>
+          <article class="stat-card stat-card-2">
+            <span class="stat-icon">🛡</span>
+            <h3>Risk Summary</h3>
+            <p>Quality score & merge advice</p>
+          </article>
+          <article class="stat-card stat-card-3">
+            <span class="stat-icon">📖</span>
+            <h3>Learn Mode</h3>
+            <p>Plain-English fix explanations</p>
+          </article>
+        </div>
+      </div>
+    </header>
+
+    <main class="main">
+      <div class="container">
+        <div class="section-label">
+          <span class="section-label-text">Get started</span>
+          <span class="section-label-line"></span>
+        </div>
+
+        <div class="grid">
+          <section class="card card-tall" id="review-section">
+            <div class="card-header">
+              <span class="card-number">01</span>
+              <div>
+                <h2>Review a Pull Request</h2>
+                <p>Paste a GitHub PR URL. Preview first, then post to GitHub.</p>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="pr-url">GitHub PR URL</label>
+              <div class="input-wrap">
+                <span class="input-prefix">🔗</span>
+                <input type="url" id="pr-url" placeholder="github.com/owner/repo/pull/123" />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="conventions">
+                Team conventions
+                <span class="label-hint">optional · one per line</span>
+              </label>
+              <textarea id="conventions" rows="4" placeholder="e.g. Always wrap API calls in try/catch&#10;Leave empty to auto-learn from repo history"></textarea>
+            </div>
+
+            <div class="actions">
+              <button id="btn-dry-run" class="btn btn-secondary" type="button">
+                <span>Preview</span>
+              </button>
+              <button id="btn-review" class="btn btn-primary" type="button">
+                <span>Review & Post</span>
+                <span class="btn-arrow">→</span>
+              </button>
+            </div>
+          </section>
+
+          <section class="card" id="conventions-section">
+            <div class="card-header">
+              <span class="card-number">02</span>
+              <div>
+                <h2>Learn Conventions</h2>
+                <p>Extract coding rules from merged PR review history.</p>
+              </div>
+            </div>
+
+            <div class="steps">
+              <div class="step"><span>1</span> Paste repo URL</div>
+              <div class="step"><span>2</span> Scan merged PRs</div>
+              <div class="step"><span>3</span> Get 3+ team rules</div>
+            </div>
+
+            <div class="form-group">
+              <label for="repo-url">GitHub Repository URL</label>
+              <div class="input-wrap">
+                <span class="input-prefix">📁</span>
+                <input type="url" id="repo-url" placeholder="github.com/owner/repo" />
+              </div>
+            </div>
+
+            <button id="btn-extract" class="btn btn-primary btn-full" type="button">
+              <span>Extract Rules</span>
+              <span class="btn-arrow">→</span>
+            </button>
+          </section>
+        </div>
+
+        <section id="results" class="card results-card hidden">
+          <div class="card-header">
+            <span class="card-number card-number-result">✓</span>
+            <div>
+              <h2>Results</h2>
+              <p id="results-subtitle">Review output will appear here.</p>
+            </div>
+          </div>
+
+          <div id="loading" class="loading hidden">
+            <div class="loader-wrap">
+              <div class="loader" aria-hidden="true"></div>
+            </div>
+            <p class="loading-text">Analyzing code…</p>
+            <p class="loading-hint">Fetching diffs, building context, running AI review</p>
+            <div class="loading-dots" aria-hidden="true"><span></span><span></span><span></span></div>
+          </div>
+
+          <div id="output"></div>
+        </section>
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="container footer-inner">
+        <p class="footer-copy">Code Review Copilot · FastAPI · GitHub API · NVIDIA LLM</p>
+        <div id="health-status" class="status-pill">Checking server…</div>
+      </div>
+    </footer>
+  </div>
 
   <script src="/static/app.js"></script>
 </body>
