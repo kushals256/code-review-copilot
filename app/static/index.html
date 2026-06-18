@@ -7,10 +7,32 @@
   <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
-  <header>
-    <div class="logo">🤖 Code Review Copilot</div>
-    <p class="tagline">Catches bugs, explains decisions, teaches as it reviews</p>
-  </header>
+<header>
+  <div class="hero">
+    <h1>Code Review Copilot</h1>
+    <p>
+      AI-powered GitHub reviewer that detects bugs, identifies risks,
+      learns team conventions, and explains code decisions.
+    </p>
+
+    <div class="hero-stats">
+      <div class="stat-card">
+        <h3>Fast Reviews</h3>
+        <span>Automated PR Analysis</span>
+      </div>
+
+      <div class="stat-card">
+        <h3>Security Checks</h3>
+        <span>Find Vulnerabilities Early</span>
+      </div>
+
+      <div class="stat-card">
+        <h3>Learning Mode</h3>
+        <span>Junior-Friendly Explanations</span>
+      </div>
+    </div>
+  </div>
+</header>
 
   <main>
     <section class="card" id="review-section">
@@ -57,9 +79,11 @@
     </section>
   </main>
 
-  <footer>
-    <p>Assignment 2: Code Review Copilot — AI reviewer for GitHub PRs</p>
-  </footer>
+<footer>
+  <p>
+    Built with FastAPI, OpenAI, GitHub APIs & Modern UI Design
+  </p>
+</footer>
 
   <script src="/static/app.js"></script>
 </body>
