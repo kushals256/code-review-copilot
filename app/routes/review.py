@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException
 
 from app.models.schemas import ReviewRequest
 from app.services.review_pipeline import ReviewPipeline
+from app.services.github import GitHubAuthError
 
 router = APIRouter(prefix="/api/review", tags=["review"])
 
@@ -21,8 +22,12 @@ async def review_pr(request: ReviewRequest):
             "review": result.model_dump(),
             "github": post_result,
         }
+    except GitHubAuthError as e:
+        raise HTTPException(status_code=401, detail=str(e))
+
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Review failed: {e}")
 
@@ -42,7 +47,11 @@ async def review_pr_dry_run(request: ReviewRequest):
             "review": result.model_dump(),
             "github": post_result,
         }
+    except GitHubAuthError as e:
+        raise HTTPException(status_code=401, detail=str(e))
+
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+        
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Review failed: {e}")
