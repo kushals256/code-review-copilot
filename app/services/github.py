@@ -30,6 +30,9 @@ class FileChange:
     deletions: int
     previous_filename: Optional[str] = None
 
+class GitHubAuthError(Exception):
+    """Raised when GitHub authentication fails."""
+    pass
 
 class GitHubClient:
     def __init__(self, token: Optional[str] = None):
@@ -40,13 +43,34 @@ class GitHubClient:
             "X-GitHub-Api-Version": "2022-11-28",
         }
 
+    
     async def _get(self, path: str, params: Optional[dict] = None) -> Any:
         async with httpx.AsyncClient(timeout=60.0) as client:
             resp = await client.get(
                 f"{GITHUB_API}{path}", headers=self.headers, params=params
             )
-            resp.raise_for_status()
+
+            try:
+                resp.raise_for_status()
+            except httpx.HTTPStatusError as e:
+                
+                if e.response.status_code == 401:
+                    raise GitHubAuthError(
+                        "GitHub token is invalid or not configured."
+                    )
+
+                elif e.response.status_code == 403:
+                    raise ValueError(
+                        "GitHub API access forbidden or rate limit exceeded."
+                    )
+                elif e.response.status_code == 404:
+                    raise ValueError(
+                        "Repository or pull request not found."
+                    )
+                raise
+
             return resp.json()
+
 
     async def _post(self, path: str, json: dict) -> Any:
         async with httpx.AsyncClient(timeout=60.0) as client:
